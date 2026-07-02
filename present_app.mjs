@@ -82,9 +82,17 @@ function syncLabels(cfg) {
 
 // --- THREE SCENE --------------------------------------------------------------
 const canvas = $('three');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
+// Graceful degradation: without WebGL the sliders, verdict, metrics, and the
+// 2D landing cloud must still work — only the 3D court goes dark.
+let renderer = null;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+} catch (err) {
+  const legendEl = document.querySelector('.stage-legend');
+  if (legendEl) legendEl.textContent = '3D view unavailable on this device — the physics, verdict, and landing cloud still run.';
+}
 const scene = new THREE.Scene();
 const world = new THREE.Group();
 scene.add(world);
@@ -388,9 +396,11 @@ function updateAll({ relaunch = false } = {}) {
 // --- ANIMATION -------------------------------------------------------------------
 function resize() {
   const rect = canvas.getBoundingClientRect();
-  renderer.setSize(rect.width, rect.height, false);
-  camera.aspect = rect.width / rect.height;
-  camera.updateProjectionMatrix();
+  if (renderer) {
+    renderer.setSize(rect.width, rect.height, false);
+    camera.aspect = rect.width / rect.height;
+    camera.updateProjectionMatrix();
+  }
   if (lastResult) drawCloud(lastResult);
 }
 window.addEventListener('resize', resize);
@@ -430,8 +440,10 @@ function animate(now) {
     ball.position.set(0, cfg.court.h, 0);
     ball.rotation.x += spinRate * 0.25 * dt;
   }
-  orbit.update();
-  renderer.render(scene, camera);
+  if (renderer) {
+    orbit.update();
+    renderer.render(scene, camera);
+  }
 }
 
 // --- WIRING ------------------------------------------------------------------------
