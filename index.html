@@ -50,9 +50,18 @@
     .air-readout { color: var(--muted); font-size: 11.5px; line-height: 1.5; }
     .air-readout b { color: var(--cyan); }
     .stage { position: relative; min-height: 420px; height: calc(100vh - 120px); border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: radial-gradient(circle at 30% 12%, rgba(255,159,67,.12), transparent 40%), var(--bg); }
-    #three { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-    .stage-legend { position: absolute; left: 12px; bottom: 10px; display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font: 600 11px 'JetBrains Mono', monospace; background: rgba(7,16,25,.66); padding: 6px 10px; border-radius: 10px; }
+    #three { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+    #three:active { cursor: grabbing; }
+    .stage-legend { position: absolute; left: 12px; bottom: 10px; display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font: 600 11px 'JetBrains Mono', monospace; background: rgba(7,16,25,.66); padding: 6px 10px; border-radius: 10px; pointer-events: none; }
     .swatch { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+    .stage-chips { position: absolute; left: 12px; top: 12px; display: flex; gap: 8px; flex-wrap: wrap; pointer-events: none; max-width: calc(100% - 150px); }
+    .stage-chip { font: 700 12px 'JetBrains Mono', monospace; color: var(--ink); background: rgba(7,16,25,.72); border: 1px solid var(--line); padding: 7px 11px; border-radius: 999px; backdrop-filter: blur(8px); }
+    .stage-chip[data-tone="make"] { color: var(--green); border-color: rgba(124,247,161,.55); }
+    .stage-chip[data-tone="edge"] { color: var(--orange); border-color: rgba(255,159,67,.55); }
+    .stage-chip[data-tone="miss"] { color: var(--red); border-color: rgba(255,107,107,.55); }
+    .stage-hint { position: absolute; right: 12px; top: 12px; pointer-events: none; color: var(--muted); font: 600 10.5px 'JetBrains Mono', monospace; background: rgba(7,16,25,.6); padding: 6px 10px; border-radius: 999px; }
+    .stage-fab { display: none; position: absolute; right: 14px; bottom: 14px; width: 74px; height: 74px; border-radius: 999px; border: none; cursor: pointer; color: #1c1003; font: 800 13px Inter, sans-serif; background: linear-gradient(135deg, #ffd48f, var(--orange)); box-shadow: 0 12px 30px rgba(255,159,67,.4), 0 0 0 4px rgba(255,159,67,.18); }
+    .stage-fab:active { transform: scale(0.94); }
     .verdict { display: flex; gap: 12px; align-items: center; }
     .verdict-flag { min-width: 88px; text-align: center; padding: 12px 10px; border-radius: 14px; border: 1px solid var(--line); font: 800 22px/1 Inter, sans-serif; }
     .verdict-flag[data-tone="make"] { color: var(--green); background: rgba(124,247,161,.13); border-color: rgba(124,247,161,.52); }
@@ -69,10 +78,24 @@
     .equation { padding: 10px 12px; border-radius: 12px; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.1); color: #f7d7a5; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.7; overflow-x: auto; }
     .scope { color: var(--muted); font-size: 10.5px; line-height: 1.5; }
     @media (max-width: 1020px) {
-      main { grid-template-columns: 1fr; }
-      .stage { order: -1; height: 44vh; min-height: 320px; }
+      body { padding: 8px; gap: 8px; }
+      main { grid-template-columns: 1fr; gap: 8px; }
+      header { padding: 10px 12px; }
+      .brand-mark { width: 32px; height: 32px; border-radius: 10px; }
+      h1 { font-size: 15px; }
+      .sub { font-size: 11px; }
+      .pill { display: none; }
+      .stage { order: -1; height: 58dvh; min-height: 400px; border-radius: 16px; }
+      .stage-fab { display: block; }
+      .stage-legend { left: 12px; right: auto; bottom: 14px; flex-direction: column; gap: 5px; padding: 7px 10px; }
+      .stage-hint { font-size: 10px; }
+      .section { padding: 14px; }
+      .label { font-size: 13.5px; margin: 14px 0 4px; }
+      input[type="range"] { min-height: 46px; }
+      input[type="range"]::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -11px; }
+      input[type="range"]::-moz-range-thumb { width: 28px; height: 28px; }
+      .actions { position: sticky; bottom: 8px; z-index: 5; background: var(--panel); backdrop-filter: blur(10px); border-radius: 14px; }
       #cloudCanvas { height: 300px; }
-      body { padding: 8px; }
     }
   </style>
 </head>
@@ -128,11 +151,18 @@
 
     <section class="stage">
       <canvas id="three"></canvas>
+      <div class="stage-chips">
+        <span class="stage-chip" id="chipVerdict" data-tone="make">—</span>
+        <span class="stage-chip" id="chipPmake">P(make) —</span>
+        <span class="stage-chip" id="chipEntry">entry —</span>
+      </div>
+      <div class="stage-hint">drag to look around</div>
       <div class="stage-legend">
         <span><i class="swatch" style="background:var(--orange)"></i>ideal (no air) — scored</span>
         <span><i class="swatch" style="background:var(--cyan)"></i>with drag + Magnus</span>
         <span><i class="swatch" style="background:var(--green)"></i>make target</span>
       </div>
+      <button class="stage-fab" id="stageShoot" type="button">SHOOT</button>
     </section>
 
     <aside class="panel">
@@ -167,9 +197,23 @@
 
   <script>
     window.__shotLabErrors = [];
-    window.addEventListener('error', (e) => { window.__shotLabErrors.push({ message: e.message, filename: e.filename, lineno: e.lineno }); });
-    window.addEventListener('unhandledrejection', (e) => { window.__shotLabErrors.push({ message: String(e.reason) }); });
+    function __labShowError() {
+      var el = document.getElementById('errBadge');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'errBadge';
+        el.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:99;max-width:92vw;background:rgba(120,20,20,.92);color:#ffd7d7;font:600 11px/1.4 monospace;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,107,107,.6);word-break:break-all;';
+        document.body.appendChild(el);
+      }
+      var first = window.__shotLabErrors[0] || {};
+      el.textContent = 'lab error: ' + (first.message || 'module failed to start') + (first.lineno ? ' @' + (first.filename || '') + ':' + first.lineno : '');
+    }
+    window.addEventListener('error', (e) => { window.__shotLabErrors.push({ message: e.message, filename: e.filename, lineno: e.lineno }); __labShowError(); });
+    window.addEventListener('unhandledrejection', (e) => { window.__shotLabErrors.push({ message: String(e.reason) }); __labShowError(); });
+    setTimeout(function () {
+      if (!window.__labBooted) { if (!window.__shotLabErrors.length) window.__shotLabErrors.push({ message: 'app module did not boot (import or parse failure)' }); __labShowError(); }
+    }, 4000);
   </script>
-  <script type="module" src="./present_app.mjs?v=1"></script>
+  <script type="module" src="./present_app.mjs?v=1782969993"></script>
 </body>
 </html>

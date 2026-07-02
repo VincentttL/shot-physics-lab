@@ -97,13 +97,25 @@ const scene = new THREE.Scene();
 const world = new THREE.Group();
 scene.add(world);
 const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 60);
-camera.position.set(3.6, 3.1, 3.2);
 const orbit = new OrbitControls(camera, canvas);
-orbit.target.set(0.0, 2.1, -2.2);
 orbit.enableDamping = true;
 orbit.maxPolarAngle = Math.PI * 0.52;
 orbit.minDistance = 2.2;
 orbit.maxDistance = 12;
+// Portrait phones get a behind-the-shooter vantage so the whole arc fits the
+// tall narrow stage; wide screens keep the side view.
+const startAspect = (() => {
+  const r = canvas.getBoundingClientRect();
+  return r.height > 10 ? r.width / r.height : 1.6;
+})();
+if (startAspect < 0.95) {
+  camera.fov = 58;
+  camera.position.set(2.1, 3.2, 4.1);
+  orbit.target.set(0, 2.55, -2.4);
+} else {
+  camera.position.set(3.6, 3.1, 3.2);
+  orbit.target.set(0.0, 2.1, -2.2);
+}
 
 scene.add(new THREE.AmbientLight(0xbfd4e6, 0.55));
 const key = new THREE.DirectionalLight(0xfff2dd, 1.15);
@@ -335,6 +347,8 @@ function updateVerdict(cfg) {
   verdictFlag.textContent = flag;
   verdictFlag.dataset.tone = tone;
   verdictText.textContent = text;
+  const chip = $('chipVerdict');
+  if (chip) { chip.textContent = flag; chip.dataset.tone = tone; }
 }
 
 function updateMetrics(cfg, result) {
@@ -343,6 +357,10 @@ function updateMetrics(cfg, result) {
   metricEls.opt.textContent = `${fmt(opt.thetaDeg, 1)}° · ${fmt(opt.speed)}`;
   metricEls.entry.textContent = `${fmt(deg(entryAngle(cfg.theta, cfg.speed, cfg.court)), 1)}°`;
   metricEls.time.textContent = `${fmt(flightTimeToRim(cfg.theta, cfg.speed, cfg.court))} s`;
+  const chipP = $('chipPmake');
+  if (chipP) chipP.textContent = `P(make) ${Math.round(result.makeProbability * 100)}%`;
+  const chipE = $('chipEntry');
+  if (chipE) chipE.textContent = `entry ${fmt(deg(entryAngle(cfg.theta, cfg.speed, cfg.court)), 1)}°`;
 }
 
 function updateAirReadout(cfg) {
@@ -396,14 +414,28 @@ function updateAll({ relaunch = false } = {}) {
 // --- ANIMATION -------------------------------------------------------------------
 function resize() {
   const rect = canvas.getBoundingClientRect();
+  if (rect.width < 20 || rect.height < 20) {
+    // layout not settled yet (mobile Safari) — retry shortly
+    setTimeout(resize, 300);
+    return;
+  }
   if (renderer) {
     renderer.setSize(rect.width, rect.height, false);
     camera.aspect = rect.width / rect.height;
+    camera.fov = camera.aspect < 0.95 ? 58 : 46;
     camera.updateProjectionMatrix();
   }
   if (lastResult) drawCloud(lastResult);
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 250));
+if (typeof ResizeObserver !== 'undefined') {
+  new ResizeObserver(() => resize()).observe(canvas.parentElement);
+}
+// mobile Safari can settle layout after module boot — re-measure a few times
+for (const delay of [150, 600, 1600]) setTimeout(resize, delay);
+canvas.addEventListener('webglcontextlost', (e) => e.preventDefault());
+canvas.addEventListener('webglcontextrestored', () => { resize(); updateAll({ relaunch: true }); });
 
 function samplePath(pts, t) {
   if (!pts.length) return null;
@@ -452,6 +484,7 @@ for (const key of Object.keys(controls)) {
 }
 airToggle.addEventListener('change', () => updateAll({ relaunch: true }));
 $('shootBtn').addEventListener('click', () => updateAll({ relaunch: true }));
+$('stageShoot')?.addEventListener('click', () => updateAll({ relaunch: true }));
 $('resetBtn').addEventListener('click', () => {
   const opt = brancazioOptimum(courtWith({ h: Number(controls.height.value), d: Number(controls.distance.value) }));
   controls.angle.value = opt.thetaDeg.toFixed(1);
@@ -466,3 +499,4 @@ $('resetBtn').addEventListener('click', () => {
 resize();
 updateAll({ relaunch: true });
 requestAnimationFrame(animate);
+window.__labBooted = true;
