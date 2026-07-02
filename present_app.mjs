@@ -239,8 +239,11 @@ function buildFlight(cfg) {
   flight = {
     idealPts,
     airPts,
-    duration: (airToggle.checked && airPts.length ? airPts[airPts.length - 1].t : idealPts[idealPts.length - 1]?.t) || 1.1,
-    useAir: airToggle.checked,
+    // The ball always flies the scored ideal arc (it threads the rim on a make,
+    // matching the verdict). showAir only decides whether the cyan drag+Magnus
+    // comparison line is drawn — it never changes the ball's path.
+    duration: idealPts[idealPts.length - 1]?.t || 1.1,
+    showAir: airToggle.checked,
     crossing,
   };
   // redraw lines
@@ -461,8 +464,9 @@ function animate(now) {
   const spinRate = cfgSpin * 2 * Math.PI / 60;
   if (isLaunching) {
     const t = (now - launchStart) / 1000;
-    const pts = flight.useAir && flight.airPts.length ? flight.airPts : flight.idealPts;
-    const pos = samplePath(pts, t);
+    // Ball always follows the scored ideal arc so it visibly threads the rim on
+    // a make; the air arc is a shown/hidden comparison line, not the ball path.
+    const pos = samplePath(flight.idealPts, t);
     if (pos) ball.position.copy(pos);
     ball.rotation.x += spinRate * dt;
     if (t > flight.duration + 0.55) isLaunching = false;
