@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Shot Physics Lab — Free-Throw Edition</title>
+  <link rel="preconnect" href="https://esm.sh" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #071019;
+      --panel: rgba(9, 18, 30, 0.82);
+      --ink: #f5efe4;
+      --muted: #9fb0c2;
+      --line: rgba(255,255,255,.14);
+      --orange: #ff9f43;
+      --cyan: #60d8ff;
+      --green: #7cf7a1;
+      --red: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font-family: Inter, system-ui, sans-serif; }
+    body { display: grid; grid-template-rows: auto 1fr; gap: 12px; padding: 12px; min-height: 100vh; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); }
+    .brand { display: flex; gap: 12px; align-items: center; }
+    .brand-mark { width: 38px; height: 38px; border-radius: 12px; flex: 0 0 auto; background: radial-gradient(circle at 35% 30%, #ffd29a, #f28a2e 45%, #7b2e00 100%); box-shadow: inset -6px -7px 15px rgba(0,0,0,.28); position: relative; }
+    .brand-mark::before, .brand-mark::after { content: ""; position: absolute; inset: 7px 3px; border: 1.5px solid rgba(70,31,4,.56); border-left: none; border-right: none; border-radius: 50%; transform: rotate(28deg); }
+    h1 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+    .sub { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    .pill { font-family: 'JetBrains Mono', monospace; color: var(--green); font-size: 10.5px; border: 1px solid rgba(124,247,161,.3); background: rgba(124,247,161,.08); padding: 6px 10px; border-radius: 999px; }
+    main { display: grid; grid-template-columns: minmax(280px, 330px) 1fr minmax(300px, 360px); gap: 12px; align-items: start; }
+    .panel { border: 1px solid var(--line); background: var(--panel); border-radius: 18px; overflow: hidden; }
+    .section { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+    .section:last-child { border-bottom: none; }
+    .group-title { margin: 0 0 4px; color: var(--orange); font: 800 10px/1 'JetBrains Mono', monospace; letter-spacing: .11em; text-transform: uppercase; }
+    .label { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--muted); margin: 12px 0 5px; }
+    .label strong { color: var(--ink); font-family: 'JetBrains Mono', monospace; font-size: 12px; text-align: right; }
+    input[type="range"] { width: 100%; accent-color: var(--orange); min-height: 32px; touch-action: pan-y; }
+    input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: rgba(255,255,255,.16); }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 999px; border: 2px solid rgba(255,255,255,.88); background: var(--orange); box-shadow: 0 0 0 6px rgba(255,159,67,.14); }
+    input[type="range"]::-moz-range-track { height: 6px; border-radius: 999px; background: rgba(255,255,255,.16); }
+    input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 999px; border: 2px solid rgba(255,255,255,.88); background: var(--orange); }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+    button.action { border: none; color: #1c1003; background: linear-gradient(135deg, #ffd48f, var(--orange)); padding: 12px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 14px; }
+    button.action.secondary { background: rgba(255,255,255,.08); color: var(--ink); border: 1px solid var(--line); }
+    .air-row { display: flex; align-items: center; gap: 9px; margin: 12px 0 6px; font-size: 12.5px; }
+    .air-row input { width: 17px; height: 17px; accent-color: var(--cyan); }
+    .air-readout { color: var(--muted); font-size: 11.5px; line-height: 1.5; }
+    .air-readout b { color: var(--cyan); }
+    .stage { position: relative; min-height: 420px; height: calc(100vh - 120px); border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: radial-gradient(circle at 30% 12%, rgba(255,159,67,.12), transparent 40%), var(--bg); }
+    #three { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .stage-legend { position: absolute; left: 12px; bottom: 10px; display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font: 600 11px 'JetBrains Mono', monospace; background: rgba(7,16,25,.66); padding: 6px 10px; border-radius: 10px; }
+    .swatch { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+    .verdict { display: flex; gap: 12px; align-items: center; }
+    .verdict-flag { min-width: 88px; text-align: center; padding: 12px 10px; border-radius: 14px; border: 1px solid var(--line); font: 800 22px/1 Inter, sans-serif; }
+    .verdict-flag[data-tone="make"] { color: var(--green); background: rgba(124,247,161,.13); border-color: rgba(124,247,161,.52); }
+    .verdict-flag[data-tone="edge"] { color: var(--orange); background: rgba(255,159,67,.13); border-color: rgba(255,159,67,.52); }
+    .verdict-flag[data-tone="miss"] { color: var(--red); background: rgba(255,107,107,.13); border-color: rgba(255,107,107,.52); }
+    .verdict p { margin: 0; font-size: 12.5px; line-height: 1.45; color: #d7e1ed; }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .metric { border: 1px solid var(--line); background: rgba(255,255,255,.05); border-radius: 13px; padding: 10px; }
+    .metric .k { color: var(--muted); font-size: 10.5px; }
+    .metric .v { font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; margin-top: 4px; }
+    #cloudCanvas { width: 100%; height: 250px; display: block; border-radius: 13px; background: rgba(0,0,0,.24); border: 1px solid var(--line); }
+    .note h2 { margin: 0 0 7px; font-size: 15px; }
+    .note p { margin: 0 0 8px; color: #d7e1ed; line-height: 1.5; font-size: 12.5px; }
+    .equation { padding: 10px 12px; border-radius: 12px; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.1); color: #f7d7a5; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.7; overflow-x: auto; }
+    .scope { color: var(--muted); font-size: 10.5px; line-height: 1.5; }
+    @media (max-width: 1020px) {
+      main { grid-template-columns: 1fr; }
+      .stage { order: -1; height: 44vh; min-height: 320px; }
+      #cloudCanvas { height: 300px; }
+      body { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <h1>Shot Physics Lab — Free-Throw Edition</h1>
+        <p class="sub">Drag a slider, shoot, and watch which variables actually decide the make. PHYS 10600 demo.</p>
+      </div>
+    </div>
+    <span class="pill">exact projectile core · air &amp; spin shown as labeled overlay</span>
+  </header>
+
+  <main>
+    <aside class="panel">
+      <div class="section">
+        <p class="group-title">Release</p>
+        <div class="label"><span>release angle θ</span><strong id="angleOut">50.7°</strong></div>
+        <input id="angle" type="range" min="42" max="62" step="0.1" value="50.7" />
+        <div class="label"><span>release speed v</span><strong id="speedOut">7.10 m/s</strong></div>
+        <input id="speed" type="range" min="5.8" max="8.8" step="0.01" value="7.10" />
+        <div class="label"><span>backspin ω</span><strong id="spinOut">180 rpm (3.0 Hz)</strong></div>
+        <input id="spin" type="range" min="0" max="360" step="5" value="180" />
+        <div class="air-row">
+          <input id="airToggle" type="checkbox" checked />
+          <label for="airToggle">show air: drag + Magnus lift (cyan dashed arc)</label>
+        </div>
+        <p class="air-readout" id="airReadout">—</p>
+      </div>
+      <div class="section">
+        <p class="group-title">Court</p>
+        <div class="label"><span>release height h</span><strong id="heightOut">2.20 m</strong></div>
+        <input id="height" type="range" min="1.80" max="2.55" step="0.01" value="2.20" />
+        <div class="label"><span>distance d</span><strong id="distanceOut">4.20 m</strong></div>
+        <input id="distance" type="range" min="3.30" max="7.25" step="0.01" value="4.20" />
+      </div>
+      <div class="section">
+        <p class="group-title">Consistency (noise)</p>
+        <div class="label"><span>speed scatter σv</span><strong id="sigmaVOut">0.045 m/s</strong></div>
+        <input id="sigmaV" type="range" min="0.005" max="0.180" step="0.001" value="0.045" />
+        <div class="label"><span>angle scatter σθ</span><strong id="sigmaThetaOut">0.90°</strong></div>
+        <input id="sigmaTheta" type="range" min="0.05" max="4.00" step="0.05" value="0.90" />
+        <div class="label"><span>sideways drift v_lat</span><strong id="lateralOut">0.000 m/s</strong></div>
+        <input id="lateral" type="range" min="-0.25" max="0.25" step="0.005" value="0" />
+      </div>
+      <div class="section actions">
+        <button class="action" id="shootBtn">Shoot</button>
+        <button class="action secondary" id="resetBtn">Reset to optimum</button>
+      </div>
+    </aside>
+
+    <section class="stage">
+      <canvas id="three"></canvas>
+      <div class="stage-legend">
+        <span><i class="swatch" style="background:var(--orange)"></i>ideal (no air) — scored</span>
+        <span><i class="swatch" style="background:var(--cyan)"></i>with drag + Magnus</span>
+        <span><i class="swatch" style="background:var(--green)"></i>make target</span>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="section verdict">
+        <div class="verdict-flag" id="verdictFlag" data-tone="make">—</div>
+        <p id="verdictText">—</p>
+      </div>
+      <div class="section metrics">
+        <div class="metric"><div class="k">P(make) with this noise</div><div class="v" id="mPmake">—</div></div>
+        <div class="metric"><div class="k">θ* optimum [deg · m/s]</div><div class="v" id="mOpt">—</div></div>
+        <div class="metric"><div class="k">entry angle φ</div><div class="v" id="mEntry">—</div></div>
+        <div class="metric"><div class="k">flight time</div><div class="v" id="mTime">—</div></div>
+      </div>
+      <div class="section">
+        <canvas id="cloudCanvas"></canvas>
+      </div>
+      <div class="section note">
+        <h2>How the dot cloud works</h2>
+        <p>Every slider set defines one <em>mean</em> release. We fire 900 simulated shots with small Gaussian errors (σv, σθ, drift), fly each one with the exact projectile model, and mark where its center crosses the rim plane. Green = inside the make circle, red = miss. P(make) is simply the green fraction.</p>
+        <div class="equation">
+          H − h = d·tanθ − g·d² / (2·v²·cos²θ)<br>
+          θ* = 45° + ½·arctan((H − h) / d)<br>
+          make ⇔ (depth² + lateral²) ≤ r²,&nbsp; r = (D_rim − D_ball)/2 ≈ 10.9 cm<br>
+          P(make) = (# landings inside circle) / N
+        </div>
+      </div>
+      <div class="section scope">
+        Scope: verdict and cloud use the exact no-drag projectile model (unit-tested). The cyan arc adds quadratic drag (C_d ≈ 0.47) and Magnus lift from backspin (estimated C_L) — shown for comparison, not scored. Ball–rim contact is not simulated; backspin's biggest real-game payoff (softer bounces) happens at contact.
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    window.__shotLabErrors = [];
+    window.addEventListener('error', (e) => { window.__shotLabErrors.push({ message: e.message, filename: e.filename, lineno: e.lineno }); });
+    window.addEventListener('unhandledrejection', (e) => { window.__shotLabErrors.push({ message: String(e.reason) }); });
+  </script>
+  <script type="module" src="./present_app.mjs?v=1"></script>
+</body>
+</html>
