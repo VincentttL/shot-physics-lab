@@ -60,8 +60,12 @@
     .stage-chip[data-tone="edge"] { color: var(--orange); border-color: rgba(255,159,67,.55); }
     .stage-chip[data-tone="miss"] { color: var(--red); border-color: rgba(255,107,107,.55); }
     .stage-hint { position: absolute; right: 12px; top: 12px; pointer-events: none; color: var(--muted); font: 600 10.5px 'JetBrains Mono', monospace; background: rgba(7,16,25,.6); padding: 6px 10px; border-radius: 999px; }
-    .stage-fab { display: none; position: absolute; right: 14px; bottom: 14px; width: 74px; height: 74px; border-radius: 999px; border: none; cursor: pointer; color: #1c1003; font: 800 13px Inter, sans-serif; background: linear-gradient(135deg, #ffd48f, var(--orange)); box-shadow: 0 12px 30px rgba(255,159,67,.4), 0 0 0 4px rgba(255,159,67,.18); }
-    .stage-fab:active { transform: scale(0.94); }
+    .stage-chip.chip-pmake { font-size: 14px; color: var(--orange); border-color: rgba(255,159,67,.6); }
+    .stage-cta { display: none; position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); pointer-events: none; color: var(--ink); font: 700 12px 'JetBrains Mono', monospace; background: rgba(7,16,25,.78); padding: 8px 13px; border-radius: 999px; border: 1px solid rgba(255,159,67,.4); white-space: nowrap; }
+    .shoot-bar { display: none; position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 30; gap: 8px; }
+    .shoot-bar button { flex: 1; min-height: 56px; border: none; border-radius: 16px; cursor: pointer; color: #1c1003; font: 800 16px Inter, sans-serif; background: linear-gradient(135deg, #ffd48f, var(--orange)); box-shadow: 0 12px 30px rgba(255,159,67,.42); }
+    .shoot-bar button:active { transform: scale(0.97); }
+    .shoot-bar button.ghost { flex: 0 0 96px; background: rgba(20,32,48,.94); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 8px 22px rgba(0,0,0,.4); font-weight: 700; }
     .verdict { display: flex; gap: 12px; align-items: center; }
     .verdict-flag { min-width: 88px; text-align: center; padding: 12px 10px; border-radius: 14px; border: 1px solid var(--line); font: 800 22px/1 Inter, sans-serif; }
     .verdict-flag[data-tone="make"] { color: var(--green); background: rgba(124,247,161,.13); border-color: rgba(124,247,161,.52); }
@@ -78,23 +82,24 @@
     .equation { padding: 10px 12px; border-radius: 12px; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.1); color: #f7d7a5; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.7; overflow-x: auto; }
     .scope { color: var(--muted); font-size: 10.5px; line-height: 1.5; }
     @media (max-width: 1020px) {
-      body { padding: 8px; gap: 8px; }
+      body { padding: 8px; gap: 8px; padding-bottom: 86px; }
       main { grid-template-columns: 1fr; gap: 8px; }
       header { padding: 10px 12px; }
-      .brand-mark { width: 32px; height: 32px; border-radius: 10px; }
+      .brand-mark { width: 30px; height: 30px; border-radius: 10px; }
       h1 { font-size: 15px; }
-      .sub { font-size: 11px; }
+      .sub { display: none; }
       .pill { display: none; }
       .stage { order: -1; height: 58dvh; min-height: 400px; border-radius: 16px; }
-      .stage-fab { display: block; }
-      .stage-legend { left: 12px; right: auto; bottom: 14px; flex-direction: column; gap: 5px; padding: 7px 10px; }
+      .stage-legend { display: none; }
+      .stage-cta { display: block; }
       .stage-hint { font-size: 10px; }
+      .shoot-bar { display: flex; }
+      .section.actions { display: none; }
       .section { padding: 14px; }
-      .label { font-size: 13.5px; margin: 14px 0 4px; }
+      .label { font-size: 14.5px; margin: 15px 0 4px; }
       input[type="range"] { min-height: 46px; }
       input[type="range"]::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -11px; }
       input[type="range"]::-moz-range-thumb { width: 28px; height: 28px; }
-      .actions { position: sticky; bottom: 8px; z-index: 5; background: var(--panel); backdrop-filter: blur(10px); border-radius: 14px; }
       #cloudCanvas { height: 300px; }
     }
   </style>
@@ -153,17 +158,20 @@
       <canvas id="three"></canvas>
       <div class="stage-chips">
         <span class="stage-chip" id="chipVerdict" data-tone="make">—</span>
-        <span class="stage-chip" id="chipPmake">P(make) —</span>
-        <span class="stage-chip" id="chipEntry">entry —</span>
+        <span class="stage-chip chip-pmake" id="chipPmake">P(make) —</span>
       </div>
       <div class="stage-hint">drag to look around</div>
+      <div class="stage-cta">▼ drag the sliders below, then SHOOT</div>
       <div class="stage-legend">
         <span><i class="swatch" style="background:var(--orange)"></i>ideal (no air) — scored</span>
         <span><i class="swatch" style="background:var(--cyan)"></i>with drag + Magnus</span>
         <span><i class="swatch" style="background:var(--green)"></i>make target</span>
       </div>
-      <button class="stage-fab" id="stageShoot" type="button">SHOOT</button>
     </section>
+    <div class="shoot-bar">
+      <button id="stageShoot" type="button">SHOOT</button>
+      <button id="stageReset" type="button" class="ghost">Reset</button>
+    </div>
 
     <aside class="panel">
       <div class="section verdict">
@@ -214,6 +222,6 @@
       if (!window.__labBooted) { if (!window.__shotLabErrors.length) window.__shotLabErrors.push({ message: 'app module did not boot (import or parse failure)' }); __labShowError(); }
     }, 4000);
   </script>
-  <script type="module" src="./present_app.mjs?v=1782969993"></script>
+  <script type="module" src="./present_app.mjs?v=1782970482"></script>
 </body>
 </html>

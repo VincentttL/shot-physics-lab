@@ -110,8 +110,8 @@ const startAspect = (() => {
 })();
 if (startAspect < 0.95) {
   camera.fov = 58;
-  camera.position.set(2.1, 3.2, 4.1);
-  orbit.target.set(0, 2.55, -2.4);
+  camera.position.set(2.3, 3.35, 4.75);
+  orbit.target.set(0, 2.6, -2.3);
 } else {
   camera.position.set(3.6, 3.1, 3.2);
   orbit.target.set(0.0, 2.1, -2.2);
@@ -485,6 +485,7 @@ for (const key of Object.keys(controls)) {
 airToggle.addEventListener('change', () => updateAll({ relaunch: true }));
 $('shootBtn').addEventListener('click', () => updateAll({ relaunch: true }));
 $('stageShoot')?.addEventListener('click', () => updateAll({ relaunch: true }));
+$('stageReset')?.addEventListener('click', () => $('resetBtn').click());
 $('resetBtn').addEventListener('click', () => {
   const opt = brancazioOptimum(courtWith({ h: Number(controls.height.value), d: Number(controls.distance.value) }));
   controls.angle.value = opt.thetaDeg.toFixed(1);
