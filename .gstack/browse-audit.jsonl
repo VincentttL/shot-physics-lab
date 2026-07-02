@@ -1,0 +1,3 @@
+{"ts":"2026-07-02T02:47:35.832Z","cmd":"goto","args":"http://localhost:8899/?nocache=21490","origin":"http://localhost:8899/?nocache=21490","durationMs":276,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-07-02T02:47:36.308Z","cmd":"wait","args":"--networkidle","origin":"http://localhost:8899/?nocache=21490","durationMs":406,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-07-02T02:47:38.599Z","cmd":"js","args":"new Promise(r => setTimeout(() => r(JSON.stringify({errors: window.__shotLabErrors, pmake: document.getElementById('mPmake')?.textContent, verdict: document.getElementById('verdictFlag')?.textContent,…","origin":"http://localhost:8899/?nocache=21490","durationMs":2206,"status":"ok","hasCookies":false,"mode":"launched"}

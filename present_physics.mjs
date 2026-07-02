@@ -14,12 +14,15 @@ export const BALL = Object.freeze({
 });
 
 // Lift coefficient from spin factor S = R*omega/|v|.
-// C_L ≈ 0.6·S clamped — calibrated so 3 Hz backspin at 7 m/s gives a Magnus
-// force of ~4% of gravity, matching published basketball estimates.
+// Bilinear fit C_L = 0.09 + 0.6·S (Sawicki/Nathan, baseball data covering the
+// free-throw range S = 0.22-0.33; no basketball-specific C_L measurement
+// exists). Gives Magnus ~5-6% of gravity at 3 Hz, 7 m/s. Ramped to zero below
+// S = 0.05 where the fit is not valid.
 export function liftCoefficient(spinOmega, speed) {
   if (!(speed > 0.01) || !(spinOmega > 0)) return 0;
   const S = BALL.radius * spinOmega / speed;
-  return Math.min(0.6 * S, 0.45);
+  const cl = Math.min(0.09 + 0.6 * S, 0.45);
+  return cl * Math.min(1, S / 0.05);
 }
 
 export function airForces({ vx, vy, spinOmega }) {
